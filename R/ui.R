@@ -33,6 +33,10 @@ ui <- bs4Dash::bs4DashPage(
       bs4Dash::bs4SidebarMenuItem(
         "Feature expression (heatmap)",
         tabName = "feature_heatmap"
+      ),
+      bs4Dash::bs4SidebarMenuItem(
+        "X-sample comparison",
+        tabName = "x-sample_comparison"
       )
     )
   ),
@@ -46,19 +50,38 @@ ui <- bs4Dash::bs4DashPage(
       bs4Dash::tabItem(
         "feature_heatmap",
         shiny::fluidRow(
-          column(6,
+          shiny::column(6,
             featureSelectUI("heatmap_x")
           ),
-          column(6,
+          shiny::column(6,
             featureSelectUI("heatmap_y")
           )
         ),
         shiny::fluidRow(
-          column(3),
-          column(6,
+          shiny::column(3),
+          shiny::column(6,
             shiny::plotOutput("heatmap")
           ),
-          column(3)
+          shiny::column(3)
+        )
+      ),
+      bs4Dash::tabItem(
+        "x-sample_comparison",
+        shiny::fluidRow(
+          shiny::column(4,
+            shiny::selectInput(
+              "x_sample",
+              label = "Select sample to compare",
+              choices = NULL
+            ),
+            shinyWidgets::actionBttn(
+              "load_x_sample",
+              label = "Load data"
+            )
+          ),
+          shiny::column(8,
+            shiny::plotOutput("x_sample")
+          )
         )
       )
     )

@@ -7,6 +7,10 @@ server <- function(input, output, session) {
       inputId = "selected_data",
       choices = choices
     )
+    updateSelectInput(
+      inputId = "x_sample",
+      choices = choices
+    )
   }) |>
     bindEvent(input$datadir)
 
@@ -34,13 +38,6 @@ server <- function(input, output, session) {
   }) |>
     bindEvent(values$expression_data)
 
-  # output$features <- DT::renderDT(
-  #   DT::datatable(
-  #     values$features,
-  #     filter = "top",
-  #     selection = "single"
-  #   )
-  # )
   featureSelectServer("histogram", values)
   featureSelectServer("heatmap_x", values)
   featureSelectServer("heatmap_y", values)
@@ -73,4 +70,35 @@ server <- function(input, output, session) {
     bindEvent(input[["heatmap_x-features_rows_selected"]],
               input[["heatmap_y-features_rows_selected"]],
               input$log_y)
+
+  observe({
+    print(sprintf("Loading %s", file.path(input$datadir, input$selected_data)))
+    values$x_sample <-
+      data.table::fread(file.path(input$datadir, input$x_sample),
+                        drop = c("cell", "fov", "cell_ID"))
+  }) |>
+    bindEvent(input$load_x_sample)
+
+  output$x_sample <- renderPlot({
+    req(values$expression_data)
+    req(values$x_sample)
+    common_features <- intersect(
+      colnames(values$expression_data),
+      colnames(values$x_sample)
+    )
+    to_plot <- data.table::data.table(
+      x = colSums(values$expression_data[
+        ,
+        ..common_features
+      ]),
+      y = colSums(values$x_sample[
+        ,
+        ..common_features
+      ])
+    )
+    ggplot2::ggplot(to_plot, ggplot2::aes(x = x, y = y)) +
+      ggplot2::geom_point() +
+      ggplot2::scale_x_continuous(trans = "log2") +
+      ggplot2::scale_y_continuous(trans = "log2")
+  })
 }
