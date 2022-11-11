@@ -20,6 +20,9 @@ server <- function(input, output, session) {
     values$expression_data <-
       data.table::fread(file.path(input$datadir, input$selected_data),
                         drop = c("cell", "fov", "cell_ID"))
+    if (grepl("exprMat_file", input$selected_data))
+      values$expression_data <-
+        values$expression_data[rowSums(values$expression_data) < 1e5]
   }) |>
     bindEvent(input$load_data)
 
@@ -72,21 +75,24 @@ server <- function(input, output, session) {
               input$log_y)
 
   observe({
-    print(sprintf("Loading %s", file.path(input$datadir, input$selected_data)))
+    print(sprintf("Loading %s", file.path(input$datadir, input$x_sample)))
     values$x_sample <-
       data.table::fread(file.path(input$datadir, input$x_sample),
                         drop = c("cell", "fov", "cell_ID"))
+    if (grepl("exprMat_file", input$x_sample))
+      values$x_sample <-
+        values$x_sample[rowSums(values$x_sample) < 1e5]
   }) |>
     bindEvent(input$load_x_sample)
 
-  output$x_sample <- renderPlot({
+  observe({
     req(values$expression_data)
     req(values$x_sample)
     common_features <- intersect(
       colnames(values$expression_data),
       colnames(values$x_sample)
     )
-    to_plot <- data.table::data.table(
+    values$x_sample_summary <- data.table::data.table(
       x = colSums(values$expression_data[
         ,
         ..common_features
@@ -96,7 +102,21 @@ server <- function(input, output, session) {
         ..common_features
       ])
     )
-    ggplot2::ggplot(to_plot, ggplot2::aes(x = x, y = y)) +
+  }) |>
+    bindEvent(values$expression_data,
+              values$x_sample)
+
+  output$x_sample_cor <- shiny::renderText({
+    req(values$x_sample_summary)
+    sprintf("Correlation: %s", cor(values$x_sample_summary$x,
+                                   values$x_sample_summary$y))
+  })
+
+  output$x_sample <- renderPlot({
+    req(values$x_sample_summary)
+
+    ggplot2::ggplot(values$x_sample_summary,
+                    ggplot2::aes(x = x, y = y)) +
       ggplot2::geom_point() +
       ggplot2::scale_x_continuous(trans = "log2") +
       ggplot2::scale_y_continuous(trans = "log2")

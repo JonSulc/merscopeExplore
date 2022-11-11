@@ -4,7 +4,7 @@ ui <- bs4Dash::bs4DashPage(
     shiny::textInput(
       "datadir",
       label = "Path to data",
-      value = "~/merscope/data"
+      value = "~/CHUV-BDSC/merscopeExplore/data"
     ),
     shiny::selectInput(
       "selected_data",
@@ -31,7 +31,7 @@ ui <- bs4Dash::bs4DashPage(
         tabName = "feature_expression"
       ),
       bs4Dash::bs4SidebarMenuItem(
-        "Feature expression (heatmap)",
+        "Feature expression (2D)",
         tabName = "feature_heatmap"
       ),
       bs4Dash::bs4SidebarMenuItem(
@@ -77,6 +77,9 @@ ui <- bs4Dash::bs4DashPage(
             shinyWidgets::actionBttn(
               "load_x_sample",
               label = "Load data"
+            ),
+            shiny::textOutput(
+              "x_sample_cor"
             )
           ),
           shiny::column(8,
