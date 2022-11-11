@@ -4,7 +4,7 @@ ui <- bs4Dash::bs4DashPage(
     shiny::textInput(
       "datadir",
       label = "Path to data",
-      value = "~/merscope/data"
+      value = "~/CHUV-BDSC/merscopeExplore/data"
     ),
     shiny::selectInput(
       "selected_data",

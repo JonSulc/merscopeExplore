@@ -15,6 +15,8 @@ server <- function(input, output, session) {
     values$expression_data <-
       data.table::fread(file.path(input$datadir, input$selected_data),
                         drop = "cell")
+    # values$expression_data[] <- as.matrix(values$expression_data) |>
+    #   DESeq2::vst()
   }) |>
     bindEvent(input$load_data)
 
@@ -25,7 +27,9 @@ server <- function(input, output, session) {
       ,
       .(Feature,
         "N cells express" = colSums(values$expression_data != 0),
-        "N cells without" = colSums(values$expression_data == 0)
+        "N cells without" = colSums(values$expression_data == 0),
+        "Prop. cells express" = colSums(values$expression_data != 0) /
+          nrow(values$expression_data)
       )
     ]
   }) |>
@@ -44,14 +48,21 @@ server <- function(input, output, session) {
     req(input$features_rows_selected)
     feature_name <-
       colnames(values$expression_data)[input$features_rows_selected]
-    if (input$remove_zeros)
-      ggplot2::ggplot(values$expression_data[get(feature_name) != 0],
-                      ggplot2::aes(x = .data[[feature_name]])) +
-      ggplot2::geom_histogram(binwidth = 1)
-    else
-      ggplot2::ggplot(values$expression_data,
-                      ggplot2::aes(x = .data[[feature_name]])) +
-      ggplot2::geom_histogram(binwidth = 1)
+    # if (input$remove_zeros)
+    #   ggplot2::ggplot(values$expression_data[get(feature_name) != 0,
+    #                                          .(x = DESeq2::rlog(get(feature_name)))],
+    #                   ggplot2::aes(x = x)) +
+    #   ggplot2::geom_histogram(binwidth = 1)
+    # else
+      ggplot2::ggplot(values$expression_data[
+        ,
+        .(transcripts = get(feature_name))
+      ],
+                      ggplot2::aes(x = transcripts)) +
+      # ggplot2::geom_histogram(binwidth = 1)
+        ggplot2::geom_density() +
+        ggplot2::scale_x_continuous(trans = "log2")# +
+        # ggplot2::scale_y_continuous(trans = "log2")
   }) |>
     bindEvent(input$features_rows_selected,
               input$remove_zeros)
