@@ -22,7 +22,7 @@ server <- function(input, output, session) {
                         drop = c("cell", "fov", "cell_ID"))
     if (grepl("exprMat_file", input$selected_data))
       values$expression_data <-
-        values$expression_data[rowSums(values$expression_data) < 1e5]
+        values$expression_data[rowSums(values$expression_data) < 4000]
   }) |>
     bindEvent(input$load_data)
 
@@ -73,6 +73,26 @@ server <- function(input, output, session) {
     bindEvent(input[["heatmap_x-features_rows_selected"]],
               input[["heatmap_y-features_rows_selected"]],
               input$log_y)
+
+  output$heatmap_cor <- renderPrint({
+    req(values$expression_data)
+    req(input[["heatmap_x-features_rows_selected"]])
+    req(input[["heatmap_y-features_rows_selected"]])
+    feature_name_x <-
+      colnames(values$expression_data)[input[["heatmap_x-features_rows_selected"]]]
+    feature_name_y <-
+      colnames(values$expression_data)[input[["heatmap_y-features_rows_selected"]]]
+    sprintf("Correlation:
+Among cells expressing either: %.2f
+Overall: %.2f",
+            cor(values$expression_data[, ..feature_name_x],
+                values$expression_data[, ..feature_name_y]),
+            cor(values$expression_data[!!feature_name_x != 0 & !!feature_name_y !=0, ..feature_name_x],
+                values$expression_data[!!feature_name_x != 0 & !!feature_name_y !=0, ..feature_name_y])) |>
+      cat()
+  }) |>
+    bindEvent(input[["heatmap_x-features_rows_selected"]],
+              input[["heatmap_y-features_rows_selected"]])
 
   observe({
     print(sprintf("Loading %s", file.path(input$datadir, input$x_sample)))

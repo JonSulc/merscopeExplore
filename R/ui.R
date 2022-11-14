@@ -1,10 +1,10 @@
 ui <- bs4Dash::bs4DashPage(
   header = bs4Dash::bs4DashNavbar(
-    title = "Merscope data",
+    title = "Spatial data explorer",
     shiny::textInput(
       "datadir",
       label = "Path to data",
-      value = "~/CHUV-BDSC/merscopeExplore/data"
+      value = "~/merscope/data"
     ),
     shiny::selectInput(
       "selected_data",
@@ -58,7 +58,8 @@ ui <- bs4Dash::bs4DashPage(
           )
         ),
         shiny::fluidRow(
-          shiny::column(3),
+          shiny::column(3,
+            shiny::verbatimTextOutput("heatmap_cor")),
           shiny::column(6,
             shiny::plotOutput("heatmap")
           ),
